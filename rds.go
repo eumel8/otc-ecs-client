@@ -7,6 +7,8 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"os"
+	"io/ioutil"
+	"gopkg.in/yaml.v3"
 )
 
 func rdsCreate(client *gophercloud.ServiceClient, opts *servers.ListOpts) {
@@ -18,6 +20,30 @@ func rdsCreate(client *gophercloud.ServiceClient, opts *servers.ListOpts) {
 		panic(err)
 	}
 
+}
+
+func readYaml{
+
+     yfile, err := ioutil.ReadFile("mydb.yaml")
+
+     if err != nil {
+
+          log.Fatal(err)
+     }
+
+     data := make(map[interface{}]interface{})
+
+     err2 := yaml.Unmarshal(yfile, &data)
+
+     if err2 != nil {
+
+          log.Fatal(err2)
+     }
+
+     for k, v := range data {
+
+          fmt.Printf("%s -> %d\n", k, v)
+     }
 }
 
 func main() {
