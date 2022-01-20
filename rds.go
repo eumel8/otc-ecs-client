@@ -3,52 +3,68 @@ package main
 import (
 	"flag"
 	"fmt"
-	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
+	// gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
-	"os"
-	"io/ioutil"
+	// "github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"gopkg.in/yaml.v3"
+	"io/ioutil"
+	"os"
 )
 
+const (
+	AppVersion = "0.0.1"
+)
+
+
+type conf struct {
+	Name             string `yaml:"name"`
+	Datastore        string `yaml:"datastore"`
+	Ha               string `yaml:"ha"`
+	Port             string `yaml:"port"`
+	Password         string `yaml:"passord"`
+	BackupStrategy   string `yaml:"backupstrategy"`
+	FlavorRef        string `yaml:"flavorref"`
+	Volume           string `yaml:"volume"`
+	Region           string `yaml:"region"`
+	AvailabilityZone string `yaml:"availabilityzone"`
+	VpcId            string `yaml:"vpcid"`
+	SubnetId         string `yaml:"subnetid"`
+	SecurityGroupId  string `yaml:"securitygroupid"`
+}
+
+/*
 func rdsCreate(client *gophercloud.ServiceClient, opts *servers.ListOpts) {
 
-	createOpts := instances.CreateRdsOpts{
-	createResult := instances.Create(client, createOpts)
+	// createOpts := instances.CreateRdsOpts{
+	// createResult := instances.Create(client, createOpts)
 	r, err := createResult.Extract()
 	if err != nil {
 		panic(err)
 	}
-
+	return
 }
+*/
 
-func readYaml{
+func (c *conf) getConf() *conf {
 
-     yfile, err := ioutil.ReadFile("mydb.yaml")
+	yfile, err := ioutil.ReadFile("mydb.yaml")
 
-     if err != nil {
+	if err != nil {
+		panic(err)
+	}
 
-          log.Fatal(err)
-     }
+	// data := make(map[interface{}]interface{})
+	err = yaml.Unmarshal(yfile, c)
 
-     data := make(map[interface{}]interface{})
+	if err != nil {
+		panic(err)
+	}
 
-     err2 := yaml.Unmarshal(yfile, &data)
-
-     if err2 != nil {
-
-          log.Fatal(err2)
-     }
-
-     for k, v := range data {
-
-          fmt.Printf("%s -> %d\n", k, v)
-     }
+	return c
 }
 
 func main() {
 
-	status := flag.String("status", "ACTIVE", "ecs status (ACTIVE|SHUTOFF|FAILURE)")
 	version := flag.Bool("version", false, "app version")
 	help := flag.Bool("help", false, "print out the help")
 
@@ -86,33 +102,19 @@ func main() {
 	}
 
 	provider, err := openstack.AuthenticatedClient(opts)
+	fmt.Println(*provider)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("HelloYaml")
 
-	createOpts := instances.CreateRdsOpts{
-		Name:             d.Get("name").(string),
-		Datastore:        resourceRDSDataStore(d),
-		Ha:               resourceRDSHa(d),
-		ConfigurationId:  d.Get("param_group_id").(string),
-		Port:             dbPortString,
-		Password:         dbInfo["password"].(string),
-		BackupStrategy:   resourceRDSBackupStrategy(d),
-		DiskEncryptionId: volumeInfo["disk_encryption_id"].(string),
-		FlavorRef:        d.Get("flavor").(string),
-		Volume:           resourceRDSVolume(d),
-		Region:           config.GetRegion(d),
-		AvailabilityZone: resourceRDSAvailabilityZones(d),
-		VpcId:            d.Get("vpc_id").(string),
-		SubnetId:         d.Get("subnet_id").(string),
-		SecurityGroupId:  d.Get("security_group_id").(string),
-		ChargeInfo:       resourceRDSChangeMode(),
-	}
+	var c conf
+	c.getConf()
 
+	fmt.Println(c.Name)
 
-	rds, err := rdsCreate(provider, rdsOptions)
+	// rds, err := rdsCreate(provider, rdsOptions)
 	if err != nil {
 		panic(err)
 	}
-	ecsList(ecs, &servers.ListOpts{Status: *status})
 }
