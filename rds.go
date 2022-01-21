@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	// gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
+	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
-	// "github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
@@ -14,7 +14,6 @@ import (
 const (
 	AppVersion = "0.0.1"
 )
-
 
 type conf struct {
 	Name             string `yaml:"name"`
@@ -32,18 +31,30 @@ type conf struct {
 	SecurityGroupId  string `yaml:"securitygroupid"`
 }
 
-/*
-func rdsCreate(client *gophercloud.ServiceClient, opts *servers.ListOpts) {
+func rdsCreate(client *gophercloud.ServiceClient, opts *c) r {
 
-	// createOpts := instances.CreateRdsOpts{
-	// createResult := instances.Create(client, createOpts)
-	r, err := createResult.Extract()
+	createOpts := instances.CreateRdsOpts{
+		Name:             opts.Name,
+		Datastore:        opts.Datastore,
+		Ha:               opts.Ha,
+		Port:             opts.Port,
+		Password:         opts.Password,
+		BackupStrategy:   opts.BackupStrategy,
+		FlavorRef:        opts.FlavorRef,
+		Volume:           opts.Volume,
+		Region:           opts.Region,
+		AvailabilityZone: opts.AvailabilityZone,
+		VpcId:            opts.VpcId,
+		SubnetId:         opts.SubnetId,
+		SecurityGroupId:  opts.SecurityGroupId,
+	}
+	createResult := instances.Create(client, createOpts)
+	b, err := createResult.Extract()
 	if err != nil {
-		panic(err)
+		panic(r.Err)
 	}
 	return
 }
-*/
 
 func (c *conf) getConf() *conf {
 
@@ -102,18 +113,14 @@ func main() {
 	}
 
 	provider, err := openstack.AuthenticatedClient(opts)
-	fmt.Println(*provider)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("HelloYaml")
 
 	var c conf
 	c.getConf()
 
-	fmt.Println(c.Name)
-
-	// rds, err := rdsCreate(provider, rdsOptions)
+	rds, err := rdsCreate(provider, c)
 	if err != nil {
 		panic(err)
 	}
