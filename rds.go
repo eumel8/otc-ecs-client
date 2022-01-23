@@ -6,7 +6,9 @@ import (
 	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
+	"github.com/gophercloud/utils/client"
 	"gopkg.in/yaml.v3"
+	"net/http"
 	"io/ioutil"
 	"os"
 )
@@ -20,7 +22,7 @@ type conf struct {
 	Datastore        *Datastore      `yaml:"datastore"`
 	Ha               *Ha             `yaml:"ha"`
 	Port             string          `yaml:"port"`
-	Password         string          `yaml:"passord"`
+	Password         string          `yaml:"password"`
 	BackupStrategy   *BackupStrategy `yaml:"backupstrategy"`
 	FlavorRef        string          `yaml:"flavorref"`
 	Volume           *Volume         `yaml:"volume"`
@@ -38,12 +40,12 @@ type Datastore struct {
 
 type Ha struct {
 	Mode            string `json:"mode" required:"true"`
-	ReplicationMode string `json:"replication_mode,omitempty"`
+	ReplicationMode string `json:"replicationmode,omitempty"`
 }
 
 type BackupStrategy struct {
-	StartTime string `json:"start_time" required:"true"`
-	KeepDays  int    `json:"keep_days,omitempty"`
+	StartTime string `json:"starttime" required:"true"`
+	KeepDays  int    `json:"keepdays,omitempty"`
 }
 
 type Volume struct {
@@ -83,6 +85,7 @@ func rdsCreate(client *gophercloud.ServiceClient, opts *instances.CreateRdsOpts)
 		SubnetId:         c.SubnetId,
 		SecurityGroupId:  c.SecurityGroupId,
 	}
+	fmt.Println("create options:", createOpts.BackupStrategy.StartTime)
 	createResult := instances.Create(client, createOpts)
 	_, err := createResult.Extract()
 	if err != nil {
@@ -150,6 +153,15 @@ func main() {
 	provider, err := openstack.AuthenticatedClient(opts)
 	if err != nil {
 		panic(err)
+	}
+
+	if os.Getenv("OS_DEBUG") != "" {
+		provider.HTTPClient = http.Client{
+			Transport: &client.RoundTripper{
+				Rt:     &http.Transport{},
+				Logger: &client.DefaultLogger{},
+			},
+		}
 	}
 
 	rds, err := openstack.NewRDSV3(provider, gophercloud.EndpointOpts{})
