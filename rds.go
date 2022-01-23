@@ -16,42 +16,77 @@ const (
 )
 
 type conf struct {
-	Name             string `yaml:"name"`
-	Datastore        string `yaml:"datastore"`
-	Ha               string `yaml:"ha"`
-	Port             string `yaml:"port"`
-	Password         string `yaml:"passord"`
-	BackupStrategy   string `yaml:"backupstrategy"`
-	FlavorRef        string `yaml:"flavorref"`
-	Volume           string `yaml:"volume"`
-	Region           string `yaml:"region"`
-	AvailabilityZone string `yaml:"availabilityzone"`
-	VpcId            string `yaml:"vpcid"`
-	SubnetId         string `yaml:"subnetid"`
-	SecurityGroupId  string `yaml:"securitygroupid"`
+	Name             string          `yaml:"name"`
+	Datastore        *Datastore      `yaml:"datastore"`
+	Ha               *Ha             `yaml:"ha"`
+	Port             string          `yaml:"port"`
+	Password         string          `yaml:"passord"`
+	BackupStrategy   *BackupStrategy `yaml:"backupstrategy"`
+	FlavorRef        string          `yaml:"flavorref"`
+	Volume           *Volume         `yaml:"volume"`
+	Region           string          `yaml:"region"`
+	AvailabilityZone string          `yaml:"availabilityzone"`
+	VpcId            string          `yaml:"vpcid"`
+	SubnetId         string          `yaml:"subnetid"`
+	SecurityGroupId  string          `yaml:"securitygroupid"`
 }
 
-func rdsCreate(client *gophercloud.ServiceClient, opts *c) r {
+type Datastore struct {
+	Type    string `json:"type" required:"true"`
+	Version string `json:"version" required:"true"`
+}
+
+type Ha struct {
+	Mode            string `json:"mode" required:"true"`
+	ReplicationMode string `json:"replication_mode,omitempty"`
+}
+
+type BackupStrategy struct {
+	StartTime string `json:"start_time" required:"true"`
+	KeepDays  int    `json:"keep_days,omitempty"`
+}
+
+type Volume struct {
+	Type string `json:"type" required:"true"`
+	Size int    `json:"size" required:"true"`
+}
+
+func rdsCreate(client *gophercloud.ServiceClient, opts *instances.CreateRdsOpts) {
+
+	var c conf
+	c.getConf()
 
 	createOpts := instances.CreateRdsOpts{
-		Name:             opts.Name,
-		Datastore:        opts.Datastore,
-		Ha:               opts.Ha,
-		Port:             opts.Port,
-		Password:         opts.Password,
-		BackupStrategy:   opts.BackupStrategy,
-		FlavorRef:        opts.FlavorRef,
-		Volume:           opts.Volume,
-		Region:           opts.Region,
-		AvailabilityZone: opts.AvailabilityZone,
-		VpcId:            opts.VpcId,
-		SubnetId:         opts.SubnetId,
-		SecurityGroupId:  opts.SecurityGroupId,
+		Name: c.Name,
+		Datastore: &instances.Datastore{
+			Type:    c.Datastore.Type,
+			Version: c.Datastore.Version,
+		},
+		Ha: &instances.Ha{
+			Mode:            c.Ha.Mode,
+			ReplicationMode: c.Ha.ReplicationMode,
+		},
+		Port:     c.Port,
+		Password: c.Password,
+		BackupStrategy: &instances.BackupStrategy{
+			StartTime: c.BackupStrategy.StartTime,
+			KeepDays:  c.BackupStrategy.KeepDays,
+		},
+		FlavorRef: c.FlavorRef,
+		Volume: &instances.Volume{
+			Type: c.Volume.Type,
+			Size: c.Volume.Size,
+		},
+		Region:           c.Region,
+		AvailabilityZone: c.AvailabilityZone,
+		VpcId:            c.VpcId,
+		SubnetId:         c.SubnetId,
+		SecurityGroupId:  c.SecurityGroupId,
 	}
 	createResult := instances.Create(client, createOpts)
-	b, err := createResult.Extract()
+	_, err := createResult.Extract()
 	if err != nil {
-		panic(r.Err)
+		panic(err)
 	}
 	return
 }
@@ -117,10 +152,13 @@ func main() {
 		panic(err)
 	}
 
-	var c conf
-	c.getConf()
+	rds, err := openstack.NewRDSV3(provider, gophercloud.EndpointOpts{})
+	if err != nil {
+		panic(err)
+	}
 
-	rds, err := rdsCreate(provider, c)
+	rdsCreate(rds, &instances.CreateRdsOpts{})
+	//rdsCreate(rds, c)
 	if err != nil {
 		panic(err)
 	}

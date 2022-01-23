@@ -1,11 +1,18 @@
 name: "mydb"
-datastore: "ULTRAHIGH"
-ha: "semisync"
+datastore:
+  type: "MySQL"
+  version: "5.7"
+volume:
+  type: "COMMON"
+  size: 10
+ha:
+  mode:  "semisync"
 port: "3306"
 password: "A12345678+"
-backupstrategy: ""
+backupstrategy:
+  starttme: "00:00"
+  keepdays: 10 
 flavorref: "rds.mysql.c2.xlarge.ha"
-volume: "10"
 region: "eu-de"
 # availabilityzone: ["eu-de-01", "eu-de-02"]
 vpcid: "123"
