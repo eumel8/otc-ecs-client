@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/gophercloud/utils/client"
 	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/compute/v2/servers"
+	"net/http"
 	"os"
 )
 
@@ -115,6 +117,15 @@ func main() {
 	provider, err := openstack.AuthenticatedClient(opts)
 	if err != nil {
 		panic(err)
+	}
+
+	if os.Getenv("OS_DEBUG") != "" {
+		provider.HTTPClient = http.Client{
+			Transport: &client.RoundTripper{
+				Rt:     &http.Transport{},
+				Logger: &client.DefaultLogger{},
+			},
+		}
 	}
 
 	ecs, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
