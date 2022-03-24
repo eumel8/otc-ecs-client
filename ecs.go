@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/gophercloud/utils/client"
+	"github.com/jedib0t/go-pretty/v6/table"
 	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/compute/v2/servers"
@@ -23,11 +23,26 @@ const (
 	AppVersion = "0.0.2"
 )
 
+func ecsConsole(client *gophercloud.ServiceClient, id string, opts servers.ShowConsoleOutputOpts) {
+	console := servers.ShowConsoleOutput(client, id, opts)
+	fmt.Println(console)
+	return
+}
+
+func ecsGet(client *gophercloud.ServiceClient, name string) (string, error) {
+	ecsID, err := servers.IDFromName(client, name)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+	return ecsID, nil
+}
+
 func ecsList(client *gophercloud.ServiceClient, opts *servers.ListOpts) {
 	pages, err := servers.List(client, opts).AllPages()
 	if err != nil {
 		fmt.Printf("nova list failed, err:%v\n", err)
-		panic(err)
+		os.Exit(0)
 	}
 	tenant := os.Getenv("OS_USER_DOMAIN_NAME")
 	project := os.Getenv("OS_PROJECT_NAME")
@@ -77,22 +92,6 @@ func white(s string) string {
 
 func main() {
 
-	status := flag.String("status", "ACTIVE", "ecs status (ACTIVE|SHUTOFF|FAILURE)")
-	version := flag.Bool("version", false, "app version")
-	help := flag.Bool("help", false, "print out the help")
-
-	flag.Parse()
-
-	if *help {
-		fmt.Println("Provide ENV variable to connect OTC: OS_PROJECT_NAME, OS_REGION_NAME, OS_AUTH_URL, OS_IDENTITY_API_VERSION, OS_USER_DOMAIN_NAME, OS_USERNAME, OS_PASSWORD")
-		os.Exit(0)
-	}
-
-	if *version {
-		fmt.Println("version", AppVersion)
-		os.Exit(0)
-	}
-
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
 	}
@@ -132,5 +131,33 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ecsList(ecs, &servers.ListOpts{Status: *status})
+
+	status := flag.String("status", "", "ecs status (ACTIVE|SHUTOFF|FAILURE)")
+	vm := flag.String("vm", "", "ecs name to get console logs")
+	version := flag.Bool("version", false, "app version")
+	help := flag.Bool("help", false, "print out the help")
+
+	flag.Parse()
+
+	if *help {
+		fmt.Println("Provide ENV variable to connect OTC: OS_PROJECT_NAME, OS_REGION_NAME, OS_AUTH_URL, OS_IDENTITY_API_VERSION, OS_USER_DOMAIN_NAME, OS_USERNAME, OS_PASSWORD")
+		os.Exit(0)
+	}
+
+	if *version {
+		fmt.Println("version", AppVersion)
+		os.Exit(0)
+	}
+
+
+	if *status != "" {
+		ecsList(ecs, &servers.ListOpts{Status: *status})
+	}
+
+	if *vm != "" {
+		ecsId, _ := ecsGet(ecs, *vm)
+		ecsConsole(ecs, ecsId, servers.ShowConsoleOutputOpts{Length: 1000})
+	} else {
+	 	fmt.Println("Try -h for help")
+	}
 }
