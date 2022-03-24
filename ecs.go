@@ -20,7 +20,7 @@ const (
 	ColorBlue  = "\x1b[94m"
 	ColorGray  = "\x1b[90m"
 	ColorWhite = "\x1b[37m"
-	AppVersion = "0.0.2"
+	AppVersion = "0.0.3"
 )
 
 func ecsConsole(client *gophercloud.ServiceClient, id string, opts servers.ShowConsoleOutputOpts) {
@@ -91,7 +91,6 @@ func white(s string) string {
 }
 
 func main() {
-
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
 	}
